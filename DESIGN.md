@@ -91,7 +91,7 @@ Dane do opinii i realizacji trzymamy w Sanity (schematy `review`, `project`, `ca
 
 - **Typografia:** Space Grotesk (nagłówki, 600/700, tracking -0.03em), IBM Plex Mono (etykiety, numery sekcji, stats). Skala hero: `clamp(3rem, 9vw, 9rem)`.
 - **Zasada żółtego:** żółty = akcja lub najważniejsza liczba. Nic innego. Jedna żółta rzecz na ekran.
-- **Logo:** wordmark XPERTEO, "XPER" biały / "TEO" żółty + żółty kwadrat z czarnym X. Bez czapki akademickiej.
+- **Logo:** wordmark XPERTEO w całości żółty + okrągły żółty znak z czarnym X (pliki od klienta, 2026-10-04: `public/brand/logo-source.png`, `public/brand/icon-source.png`). Bez czapki akademickiej.
 - **Grid:** 12 kolumn, gutter 24px, max-width 1440px, padding 24px mobile / 64px desktop.
 - **Radius:** 4px (ostro, techniczne). Bez glassmorphism.
 - **Motion tokens:** `--ease: cubic-bezier(.16,1,.3,1)`, duration 0.6–1.2s, stagger 0.06s.
