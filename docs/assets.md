@@ -33,13 +33,25 @@ jeden kąt i rytm; ekrany odwzorowują realne strony.
 | `energynat` | energynat.solutions | 99 kB | wierny hero strony |
 | `funduszeszkoleniowe` | funduszeszkoleniowe.pl | 109 kB | wierny hero strony |
 | `enedeal` | shop.enedeal.com | 121 kB | wierny hero sklepu |
-| `303` | 303.pl | 75 kB | **model przerobił nagłówek** na "Szyjemy i znakujemy odzież dla firm" (oryginał: zdjęcie szwalni z "Od projektu po gotowy produkt"); do akceptacji lub ponownej generacji |
+| `303` | 303.pl | 75 kB | nagłówek "Szyjemy i znakujemy odzież dla firm" powtórzył się w 5 niezależnych generacjach z tego samego zrzutu, więc to realny tekst slidera strony (słabo widoczny w moim podglądzie); zostawiony |
 | `clearviewcar` | clearviewcar.pl | 89 kB | wierny hero strony |
 | `mrgroszek` | mrgroszek.pl | 95 kB | wierny hero strony |
 
-## Jeszcze nie wygenerowane
-- **Case videos (×2)** (przejazd po stronie klienta, 6 s) — zabrakło kredytów Higgsfield
-  (Kling 3.0 pro ≈ 14 kredytów za klip). Po doładowaniu generujemy w tym samym standardzie.
+## Case videos (×2) — `public/video/cases/<slug>.mp4|.webm|-poster.jpg`, 1600×1000, 6 s
+
+Kling 3.0 pro od prawdziwego zrzutu strony jako klatki startowej, 3 warianty na stronę
+(płynne przewijanie, pauza + przewijanie, delikatny najazd). **Warianty z przewijaniem
+odrzucone**: po 2–3 s model wymyślał sekcje poniżej hero z bełkotliwym tekstem, co łamie
+zasadę "nic nie wymyślamy". Wybrano wariant z najazdem, który przez 6 s pokazuje wyłącznie
+prawdziwą treść hero.
+
+| Slug | Strona | mp4 | webm | poster |
+|---|---|---|---|---|
+| `energynat` | energynat.solutions | 1,0 MB | 537 kB | 121 kB |
+| `funduszeszkoleniowe` | funduszeszkoleniowe.pl | 1,2 MB | 796 kB | 138 kB |
+
+Uwaga: prawdziwy przejazd po stronie (scroll) da się nagrać Playwrightem w sandboxie
+Higgsfield jako realny screen recording. To nie jest generacja AI, więc wymaga Twojej decyzji.
 
 ## Odrzucone, ale zachowane w Higgsfield
 - 6 wideo z literą X typograficzną (przed decyzją o znaku z logo).
@@ -47,4 +59,4 @@ jeden kąt i rytm; ekrany odwzorowują realne strony.
   mogą posłużyć jako OG image / tła sekcji, jeśli zdecydujesz.
 
 ## Zużycie kredytów
-Start 464,25 → stan po P0.5 w raporcie z sesji.
+Start 464,25 → 74 po hero/3D/obrazach → doładowanie do 512 → mockupy + case videos → stan w raporcie z sesji.

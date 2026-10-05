@@ -21,6 +21,13 @@ get f0faae63-8f2d-4344-8281-99e550ab8550.webp public/img/cases/enedeal.webp
 get 8805a950-eee6-4b3f-989f-e41d9521de7e.webp public/img/cases/303.webp
 get 4326ef76-4670-40ee-977e-9b3b47e91053.webp public/img/cases/clearviewcar.webp
 get a9ef9ef2-d316-4f58-91a1-65754582e53e.webp public/img/cases/mrgroszek.webp
+mkdir -p public/video/cases
+get 802ec1cd-ca3c-4243-a17b-fcb85cb2f398.mp4  public/video/cases/energynat.mp4
+get b4be90f0-1c12-400a-b248-c3f3c73096f7.mp4  public/video/cases/energynat.webm
+get 96dca136-43c8-4929-8636-ea81b4d0e5fa.jpg  public/video/cases/energynat-poster.jpg
+get 6de60fa9-e0be-4f93-94ed-4056cd6297de.mp4  public/video/cases/funduszeszkoleniowe.mp4
+get 968b32de-1b8d-49b1-9c3a-41674af74c70.mp4  public/video/cases/funduszeszkoleniowe.webm
+get 5c6babf4-0370-4b49-9525-57b4fcfd4146.jpg  public/video/cases/funduszeszkoleniowe-poster.jpg
 get 87eef449-974d-418f-a0c9-3fe2bb978328.zip  /tmp/x-glb.zip
 unzip -o -q /tmp/x-glb.zip -d public/models && rm /tmp/x-glb.zip
-ls -la public/video public/img public/img/cases public/models
+ls -la public/video public/video/cases public/img public/img/cases public/models
