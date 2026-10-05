@@ -20,10 +20,26 @@ o zaokrąglonych ramionach.
 | `public/img/ai-network.webp` | GPT Image 2.5, 3 warianty, upscale 4K | 51 kB, 2400×1350 | Wariant z hubami świecącymi i dużą czarną przestrzenią — czyta się jak graf n8n, zostawia miejsce na tekst; konstelacja była zbyt "kosmiczna", obwód zbyt sztywny. |
 | `public/img/training.webp` | Soul 2 (×3) + GPT Image (×1), upscale 4K | 47 kB, 2000×1333 | Długi czarny stół, cienka żółta linia na ścianie, naturalny śmiech — jedyny, który nie wygląda jak stock; wariant GPT był zbyt wypolerowany, wariant z trenerem w muszce nienaturalny. |
 
-## Jeszcze nie wygenerowane (brak danych)
-- **Mockupy case (×6)** i **case videos (×2)** — wymagają listy flagowych realizacji
-  (nazwa klienta, branża, co to za strona/aplikacja). Generujemy po otrzymaniu danych,
-  w tym samym standardzie.
+## Mockupy case (×6) — `public/img/cases/<slug>.webp`, 1600×1000
+
+Metoda: prawdziwy zrzut ekranu strony klienta (Playwright, 1440×900, w sandboxie Higgsfield)
+jako referencja obrazu → GPT Image 2.5, 3 warianty na klienta (laptop ¾, laptop + telefon,
+pływające okno + telefon) → wybór → upscale 2K → webp. Wybrano konsekwentnie wariant
+**laptop ¾ na czarnym tle z żółtym światłem krawędziowym**, żeby siatka realizacji miała
+jeden kąt i rytm; ekrany odwzorowują realne strony.
+
+| Slug | Strona | Rozmiar | Uwaga |
+|---|---|---|---|
+| `energynat` | energynat.solutions | 99 kB | wierny hero strony |
+| `funduszeszkoleniowe` | funduszeszkoleniowe.pl | 109 kB | wierny hero strony |
+| `enedeal` | shop.enedeal.com | 121 kB | wierny hero sklepu |
+| `303` | 303.pl | 75 kB | **model przerobił nagłówek** na "Szyjemy i znakujemy odzież dla firm" (oryginał: zdjęcie szwalni z "Od projektu po gotowy produkt"); do akceptacji lub ponownej generacji |
+| `clearviewcar` | clearviewcar.pl | 89 kB | wierny hero strony |
+| `mrgroszek` | mrgroszek.pl | 95 kB | wierny hero strony |
+
+## Jeszcze nie wygenerowane
+- **Case videos (×2)** (przejazd po stronie klienta, 6 s) — zabrakło kredytów Higgsfield
+  (Kling 3.0 pro ≈ 14 kredytów za klip). Po doładowaniu generujemy w tym samym standardzie.
 
 ## Odrzucone, ale zachowane w Higgsfield
 - 6 wideo z literą X typograficzną (przed decyzją o znaku z logo).
