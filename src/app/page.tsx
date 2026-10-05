@@ -1,16 +1,18 @@
 import { SECTIONS } from "@/content/site";
 import { Hero } from "@/components/hero/Hero";
+import { QuickFormSection } from "@/components/form/QuickFormSection";
 
 /**
- * Strona główna — szkielet S1–S11 wg DESIGN.md §4 (S12 = Footer w layout).
- * Każda sekcja to <section id> z nagłówkiem w HTML (SSG). Treść właściwa
- * powstaje w P1–P7, sekcja po sekcji.
+ * Strona główna — S1 (Hero) i S2 (Formularz) gotowe; S3–S11 szkielet wg DESIGN.md §4
+ * (S12 = Footer w layout). Każda sekcja to <section id> z nagłówkiem w HTML (SSG).
+ * Treść właściwa powstaje w P1–P7, sekcja po sekcji.
  */
 export default function Home() {
   return (
     <>
       <Hero />
-      {SECTIONS.slice(1).map((s) => {
+      <QuickFormSection />
+      {SECTIONS.slice(2).map((s) => {
         const Heading = "h2";
         return (
           <section

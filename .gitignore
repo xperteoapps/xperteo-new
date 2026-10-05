@@ -45,3 +45,6 @@ next-env.d.ts
 *.tsbuildinfo
 /.next-export
 /out
+
+# env — przykład jest wersjonowany
+!.env.example

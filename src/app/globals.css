@@ -233,3 +233,196 @@ html.lenis body {
     animation: none !important;
   }
 }
+
+/* ── S2 · Formularz szybki ────────────────────────────────────────────── */
+:root {
+  --error: #ff4d3d; /* jedyny kolor poza paletą: komunikaty walidacji */
+}
+.form-panel {
+  position: relative;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+@media (min-width: 1024px) {
+  .form-panel {
+    padding: 2.5rem;
+  }
+}
+.form-progress {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.form-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--signal);
+  transform-origin: left center;
+  transition: transform var(--dur-1) var(--ease);
+}
+.form-step {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+/* legend jako zwykły blok (domyślnie siada na border-top fieldsetu) */
+.form-step > legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+}
+.form-step > legend + * {
+  clear: both;
+}
+.form-step + .form-step {
+  border-top: 1px solid var(--line);
+  padding-top: 2.5rem;
+}
+.form-step[hidden] + .form-step,
+.form-step[hidden] {
+  border-top: 0;
+  padding-top: 0;
+}
+.form-step-title {
+  margin-top: 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+@media (min-width: 1024px) {
+  .form-step-title {
+    font-size: 2.25rem;
+  }
+}
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+.form-field {
+  display: block;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--fg);
+  transition: border-color 0.3s var(--ease);
+}
+.form-field:hover {
+  border-color: rgba(244, 244, 242, 0.3);
+}
+.form-field:focus {
+  outline: none;
+  border-color: var(--fg);
+}
+.form-field[aria-invalid="true"] {
+  border-color: var(--error);
+}
+.form-error {
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--error);
+}
+.form-check {
+  flex: none;
+  margin-top: 0.2rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--signal);
+}
+
+/* Chipy (checkbox/radio): input jest sr-only, stylujemy etykietę przez :has() */
+.chip {
+  display: block;
+  cursor: pointer;
+}
+.chip-box,
+.chip-pill {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  transition:
+    border-color 0.3s var(--ease),
+    background-color 0.3s var(--ease),
+    color 0.3s var(--ease);
+}
+.chip-box {
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem;
+  height: 100%;
+}
+.chip-pill {
+  align-items: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.chip:hover .chip-box,
+.chip:hover .chip-pill {
+  border-color: rgba(244, 244, 242, 0.4);
+}
+.chip:has(:focus-visible) .chip-box,
+.chip:has(:focus-visible) .chip-pill {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+.chip:has(:checked) .chip-box,
+.chip:has(:checked) .chip-pill {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+.chip:has(:checked) .chip-box .text-muted {
+  color: rgba(10, 10, 10, 0.6);
+}
+
+/* Honeypot — poza ekranem, nie display:none (boty to wykrywają) */
+.hp {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Toast */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 60;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 2 * var(--pad));
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--fg);
+  color: var(--bg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  animation: toast-in var(--dur-1) var(--ease) both;
+}
