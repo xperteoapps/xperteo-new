@@ -43,3 +43,5 @@ next-env.d.ts
 # lighthouse
 /lighthouse
 *.tsbuildinfo
+/.next-export
+/out
