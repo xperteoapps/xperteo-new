@@ -83,6 +83,14 @@ export const PILLARS: Pillar[] = [
   },
 ];
 
+/** Dane kontaktowe i rejestrowe — ze strony xperteo.pl (2026-10-04). Adres tylko w stopce. */
+export const CONTACT = {
+  email: "hello@xperteo.pl",
+  phone: "+48 453 288 709",
+  phoneHref: "tel:+48453288709",
+  address: "ul. Skarbowców 23A/B, lok. B2/117, 53-025 Wrocław",
+} as const;
+
 export const NAV_LINKS = [
   { label: "Realizacje", href: "/realizacje" },
   { label: "Opinie", href: "/opinie" },

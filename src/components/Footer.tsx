@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { NAV_LINKS, PILLARS, SITE } from "@/content/site";
+import { CONTACT, NAV_LINKS, PILLARS, SITE } from "@/content/site";
 
 /**
  * S12 · Footer (DESIGN.md §4). Szkielet z P0: tagline, 4 kolumny usług, stopka.
@@ -79,6 +79,9 @@ export function Footer() {
             © 2026 {SITE.name} · {SITE.domain} · Cała Polska, zdalnie
           </p>
         </div>
+        <p className="mt-4 font-mono text-[11px] leading-relaxed text-muted/70">
+          Dane rejestrowe: {SITE.name}, {CONTACT.address}
+        </p>
       </div>
     </footer>
   );
