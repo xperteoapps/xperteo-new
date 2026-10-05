@@ -497,31 +497,30 @@ html.lenis body {
   -webkit-text-stroke: 0;
 }
 
-/* ── S4 · Sticky stacking cards ───────────────────────────────────────── */
-.pillar-card {
-  position: relative;
+/* ── S4 · Wybór postaci (carousel → stage na desktopie z JS) ─────────── */
+.select-inner {
+  display: flex;
+  flex-direction: column;
+}
+.select-track {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 1.5rem var(--pad) 0.5rem;
+}
+.select-track::-webkit-scrollbar {
+  display: none;
+}
+.select-card {
+  flex: 0 0 86vw;
+  scroll-snap-align: center;
   background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 1.5rem;
-  will-change: transform, filter;
-}
-@media (min-width: 1024px) {
-  .pillar-card {
-    position: sticky;
-    top: calc(var(--nav-h) + 1.5rem);
-    min-height: calc(100vh - var(--nav-h) - 3rem);
-    padding: 2.5rem;
-    /* dwell: karta stoi przyklejona przez ~70vh scrolla, zanim następna zacznie ją przykrywać */
-    margin-bottom: 70vh;
-    transform-origin: center top;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .pillar-card:last-child {
-    margin-bottom: 0;
-  }
 }
 .visual {
   position: relative;
@@ -532,10 +531,40 @@ html.lenis body {
   background: var(--bg);
 }
 @media (min-width: 1024px) {
-  .visual {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    max-height: 34rem;
+  .select-card {
+    flex-basis: clamp(640px, 58vw, 960px);
+    padding: 2.25rem;
+  }
+  /* Stage: sekcja przypięta na 100vh − nav, karty absolutnie w centrum, transformy z GSAP */
+  .is-stage .select-inner {
+    height: calc(100vh - var(--nav-h));
+  }
+  .is-stage .select-track {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: block;
+    overflow: visible;
+    padding: 1.25rem 0 0.5rem;
+    perspective: 1600px;
+  }
+  .is-stage .select-card {
+    position: absolute;
+    top: 1.25rem;
+    bottom: 0.5rem;
+    left: 50%;
+    width: clamp(640px, 58vw, 960px);
+    margin-left: calc(clamp(640px, 58vw, 960px) / -2);
+    will-change: transform, opacity;
+    cursor: default;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55);
+  }
+  .is-stage .select-card:not([aria-current="true"]) {
+    cursor: pointer;
+  }
+  .is-stage .visual {
+    height: 100%;
+    aspect-ratio: auto;
   }
 }
 

@@ -34,12 +34,22 @@ export function useGsap(
       ]);
       if (cancelled) return;
       gsap.registerPlugin(ScrollTrigger);
-      let extra: void | (() => void);
+      // Do QA w przeglądarce (window.__ST.getAll()).
+      (window as unknown as { __ST?: typeof ScrollTriggerType }).__ST = ScrollTrigger;
+      let extra: void | (() => void) = undefined;
       const ctx = gsap.context(() => {
         extra = setup({ gsap, ScrollTrigger }, el);
       }, el);
+      // Sekcje montują się asynchronicznie (dynamic import), więc triggery mogą powstać
+      // w innej kolejności niż na stronie. ScrollTrigger dolicza pin-spacing tylko pinom
+      // utworzonym wcześniej — bez sort() kolejna przypięta sekcja startuje za wcześnie.
+      const raf = requestAnimationFrame(() => {
+        ScrollTrigger.sort();
+        ScrollTrigger.refresh();
+      });
       cleanup = () => {
-        if (typeof extra === "function") extra();
+        cancelAnimationFrame(raf);
+        if (typeof extra === "function") (extra as () => void)();
         ctx.revert();
       };
     })();
