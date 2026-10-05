@@ -10,6 +10,9 @@ import {
 
 const FALLBACK = `Nie udało się wysłać. Napisz na ${CONTACT.email} albo zadzwoń: ${CONTACT.phone}.`;
 
+/** Produkcyjny webhook n8n (workflow „xperteo.pl — lead z formularza (S2)”). Env nadpisuje. */
+const DEFAULT_WEBHOOK = "https://xperteo.app.n8n.cloud/webhook/xperteo-lead";
+
 /**
  * Server action S2: walidacja zod → POST JSON do n8n (`N8N_WEBHOOK`).
  * Honeypot `website`: wypełniony = bot → udajemy sukces, nic nie wysyłamy.
@@ -35,20 +38,15 @@ export async function submitLead(_prev: LeadState, formData: FormData): Promise<
     submittedAt: new Date().toISOString(),
   };
 
-  const webhook = process.env.N8N_WEBHOOK;
-  if (!webhook) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[lead] Brak N8N_WEBHOOK — payload (dev):", payload);
-      return { ok: true };
-    }
-    console.error("[lead] Brak zmiennej N8N_WEBHOOK");
-    return { ok: false, error: FALLBACK };
+  const webhook = (process.env.N8N_WEBHOOK ?? "").trim() || DEFAULT_WEBHOOK;
+  if (!process.env.N8N_WEBHOOK_SECRET) {
+    console.warn("[lead] Brak N8N_WEBHOOK_SECRET — n8n odrzuci żądanie (401)");
   }
 
   try {
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (process.env.N8N_WEBHOOK_SECRET) {
-      headers["x-webhook-secret"] = process.env.N8N_WEBHOOK_SECRET;
+      headers["x-webhook-secret"] = process.env.N8N_WEBHOOK_SECRET.trim();
     }
     const res = await fetch(webhook, {
       method: "POST",
@@ -57,7 +55,7 @@ export async function submitLead(_prev: LeadState, formData: FormData): Promise<
       cache: "no-store",
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) throw new Error(`Webhook odpowiedział ${res.status}`);
+    if (!res.ok) throw new Error(`Webhook odpowiedział ${res.status} (${webhook})`);
     return { ok: true };
   } catch (err) {
     console.error("[lead] Błąd wysyłki do n8n:", err);

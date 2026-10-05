@@ -120,8 +120,8 @@ export function Hero() {
   const poster = getImageProps({
     src: "/video/hero-poster.jpg",
     alt: "",
-    width: 1920,
-    height: 1080,
+    width: 1600,
+    height: 900,
     sizes: "100vw",
   }).props;
   const posterMobile = getImageProps({

@@ -1,7 +1,8 @@
 # Leady z formularza S2 → n8n
 
 Server action `src/app/actions/lead.ts` wysyła POST JSON na `N8N_WEBHOOK`
-z nagłówkiem `x-webhook-secret: N8N_WEBHOOK_SECRET` (zmienne w Vercel, wzór w `.env.example`).
+z nagłówkiem `x-webhook-secret: N8N_WEBHOOK_SECRET`. URL webhooka jest domyślnie wpisany w kodzie,
+`N8N_WEBHOOK` w env tylko go nadpisuje; secret musi być ustawiony w Vercel (wzór w `.env.example`).
 
 ## Workflow w n8n
 
@@ -17,7 +18,7 @@ Przebieg:
    message, budget, deadline, consent, source, submittedAt, receivedAt.
 4. Równolegle:
    - `Zapisz w tabeli Leady` — Data Table **Leady xperteo.pl** (n8n → Data tables).
-   - `Mail na hello@xperteo.pl` — Gmail (credential „Gmail account”), reply-to = e-mail klienta.
+   - `Mail z leadem` — Gmail (credential „Gmail account 2”) na m.czlonka@xperteo.pl, kopia hello@xperteo.pl, reply-to = e-mail klienta.
    - `Odpowiedz 200` — `{ "ok": true }` dla strony.
 
 Zapis i mail mają `onError: continueRegularOutput` — awaria jednego nie blokuje drugiego ani odpowiedzi.

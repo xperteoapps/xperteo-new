@@ -1,5 +1,10 @@
 # Assety Higgsfield — P0.5 (DESIGN.md §5)
 
+> **Aktualizacja 2026-10-05:** hero (wideo 16:9 i 9:16, postery) oraz obiekt 3D „X” nie pochodzą już z Higgsfield.
+> Scena R3F w `src/components/hero/HeroScene.tsx` buduje X proceduralnie z proporcji ikony logo
+> (czarna matowa bryła, żółte krawędzie, bloom, mgła, pył), a wideo mobilne/fallback jest renderowane
+> z tej samej sceny (`/render-hero`, build z `HERO_RENDER=1`, Playwright + ffmpeg). GLB i dekoder Draco usunięte.
+
 Stan: wygenerowane, obejrzane, wybrane, przetworzone i zapisane w storage Higgsfield.
 Pobranie do `/public`: `bash scripts/fetch-assets.sh` (wymaga dostępu sieciowego do
 `d2ol7oe51mr4n9.cloudfront.net`).
