@@ -1,4 +1,5 @@
 import { SECTIONS } from "@/content/site";
+import { Hero } from "@/components/hero/Hero";
 
 /**
  * Strona główna — szkielet S1–S11 wg DESIGN.md §4 (S12 = Footer w layout).
@@ -8,8 +9,9 @@ import { SECTIONS } from "@/content/site";
 export default function Home() {
   return (
     <>
-      {SECTIONS.map((s, i) => {
-        const Heading = i === 0 ? "h1" : "h2";
+      <Hero />
+      {SECTIONS.slice(1).map((s) => {
+        const Heading = "h2";
         return (
           <section
             key={s.id}
