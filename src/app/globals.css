@@ -64,6 +64,12 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* clip (nie hidden) na <main>: wjazdy z boku (x: 80) nie tworzą poziomego scrolla, sticky działa,
+   a wartość nie propaguje się na viewport (jak przy html/body). */
+#main {
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-sans);
   font-feature-settings: "ss01", "cv11";
@@ -425,4 +431,310 @@ html.lenis body {
   color: var(--bg);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   animation: toast-in var(--dur-1) var(--ease) both;
+}
+
+/* ── Wspólne: strzałka w linkach ─────────────────────────────────────── */
+.arrow {
+  display: inline-block;
+  transition: transform 0.5s var(--ease);
+}
+.group:hover .arrow {
+  transform: translateX(6px);
+}
+
+/* ── S3 / S9 · Marquee ────────────────────────────────────────────────── */
+@keyframes marquee-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes marquee-right {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+.marquee {
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  animation: marquee-left 40s linear infinite;
+  will-change: transform;
+}
+.marquee-track.marquee-right {
+  animation-name: marquee-right;
+}
+.client-mark {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 3.6vw, 3.25rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 0.4s var(--ease);
+}
+.client-mark:hover {
+  color: var(--fg);
+}
+.skill-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5rem;
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 1.6vw, 1.375rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: var(--fg);
+}
+.skill-mark-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(244, 244, 242, 0.55);
+}
+.skill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(244, 244, 242, 0.35);
+  -webkit-text-stroke: 0;
+}
+
+/* ── S4 · Sticky stacking cards ───────────────────────────────────────── */
+.pillar-card {
+  position: relative;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  will-change: transform, filter;
+}
+@media (min-width: 1024px) {
+  .pillar-card {
+    position: sticky;
+    top: calc(var(--nav-h) + 1.5rem);
+    min-height: calc(100vh - var(--nav-h) - 3rem);
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    transform-origin: center top;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .pillar-card:last-child {
+    margin-bottom: 0;
+  }
+}
+.visual {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+@media (min-width: 1024px) {
+  .visual {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 34rem;
+  }
+}
+
+/* ── S5 · Realizacje — horizontal ─────────────────────────────────────── */
+.cases-viewport {
+  margin-top: 2.5rem;
+  overflow: hidden;
+}
+.cases-track {
+  display: flex;
+  gap: 1.25rem;
+  padding-bottom: 1.5rem;
+}
+.cases-spacer {
+  flex: 0 0 calc(var(--pad) - 1.25rem);
+}
+.case-card {
+  flex: 0 0 85vw;
+  scroll-snap-align: start;
+}
+.case-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+}
+.case-media canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.case-card-last {
+  flex-basis: 60vw;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  aspect-ratio: 16 / 10;
+  display: flex;
+}
+@media (max-width: 767px) {
+  .cases-viewport {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .cases-viewport::-webkit-scrollbar {
+    display: none;
+  }
+}
+@media (min-width: 768px) {
+  .cases-track {
+    width: max-content;
+    gap: 2rem;
+  }
+  .cases-spacer {
+    flex-basis: calc(var(--pad) - 2rem);
+  }
+  .case-card {
+    /* cała karta (media 16:10 + opis) musi zmieścić się w viewport podczas pinu */
+    flex-basis: clamp(480px, calc((100vh - 27rem) * 1.6), 70vw);
+    max-width: 1100px;
+  }
+  .case-card-last {
+    flex-basis: 42vw;
+    padding: 2.5rem;
+  }
+}
+
+/* ── S8 · Proces ──────────────────────────────────────────────────────── */
+.process-line {
+  position: absolute;
+  left: 0.5rem;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: rotate(0deg);
+}
+.process-line path {
+  vector-effect: non-scaling-stroke;
+}
+.process-steps {
+  display: grid;
+  gap: 2.5rem;
+  padding-left: 2.5rem;
+}
+.process-step {
+  position: relative;
+}
+.process-dot {
+  position: absolute;
+  left: -2.5rem;
+  top: 0.1rem;
+  width: 18px;
+  height: 18px;
+  margin-left: 0.5rem;
+  transform: translateX(-8px);
+  border-radius: 999px;
+  background: var(--bg);
+  border: 2px solid var(--signal);
+}
+@media (max-width: 1023px) {
+  .process-line {
+    /* pionowa linia: rysujemy poziomą ścieżkę obróconą */
+    width: 100%;
+    height: 2px;
+    transform-origin: left top;
+    transform: rotate(90deg) translateY(-2px);
+  }
+}
+@media (min-width: 1024px) {
+  .process-line {
+    left: 0;
+    top: 9px;
+    width: 100%;
+    height: 2px;
+  }
+  .process-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+    padding-left: 0;
+    padding-top: 2.5rem;
+  }
+  .process-dot {
+    left: 0;
+    top: -2.5rem;
+    margin-left: 0;
+    transform: none;
+  }
+}
+
+/* ── S10 · FAQ (Radix) ────────────────────────────────────────────────── */
+.faq-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  text-align: left;
+  color: var(--fg);
+  transition: color 0.3s var(--ease);
+}
+.faq-trigger:hover {
+  color: var(--signal);
+}
+.faq-icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.faq-icon span {
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+  transition: transform 0.5s var(--ease);
+}
+.faq-icon span:last-child {
+  transform: rotate(90deg);
+}
+.faq-trigger[data-state="open"] .faq-icon span:last-child {
+  transform: rotate(0deg);
+}
+.faq-content {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.6s var(--ease);
+}
+.faq-content[data-state="closed"] {
+  grid-template-rows: 0fr;
+}
+.faq-content-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+/* Bez JS Radix nie ustawi data-state — wszystkie odpowiedzi widoczne (domyślne 1fr). */
+
+/* ── S11 · Finalne CTA ────────────────────────────────────────────────── */
+.cta-h2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.22em;
+  font-size: clamp(3rem, 11vw, 11rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  max-width: 12ch;
+}
+.cta-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.cta-mask > span {
+  display: inline-block;
 }
