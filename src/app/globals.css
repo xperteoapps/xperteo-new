@@ -226,49 +226,6 @@ html.lenis body {
   animation: hero-arrow 1.6s ease-in-out infinite;
 }
 
-/* Multiplayer cursors (desktop, pointer: fine) */
-.cursors .cursor {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.4s var(--ease);
-  will-change: transform;
-}
-.cursors.is-live .cursor {
-  opacity: 1;
-}
-.cursors .cursor-you {
-  opacity: 0;
-  transition: none;
-}
-.cursor-arrow {
-  fill: var(--fg);
-  stroke: var(--bg);
-  stroke-width: 1;
-}
-.cursor-you .cursor-arrow {
-  fill: var(--signal);
-}
-.cursor-label {
-  margin-top: 12px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  padding: 4px 6px;
-  border-radius: var(--radius);
-  background: var(--fg);
-  color: var(--bg);
-}
-.cursor-you .cursor-label {
-  background: var(--signal);
-  color: var(--signal-ink);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .hero [data-line],
   .hero [data-fade],

@@ -133,7 +133,6 @@ Czarny ekran, licznik 0→100 w Plex Mono, żółta linia rośnie od lewej. Przy
 - CTA: `[Bezpłatna konsultacja]` (żółty) · `[Zobacz realizacje ↓]` (outline).
 - 3 stats w Plex Mono: `120+ projektów` · `5,0 Google` · `24 h odpowiedź` — liczby odliczają od 0 przy wejściu.
 - **Tło 3D (R3F):** abstrakcyjny obiekt "X" z logo — czarna matowa bryła z żółtymi krawędziami emisyjnymi, obraca się 15° za kursorem (lerp), przy scrollu 0→100vh obraca się o 90° i oddala (scale 1→0.6). Fallback: wideo loop z Higgsfield.
-- **Multiplayer cursors:** 3 etykiety "Mat", "Wojtek", "Dawid" dryfują po hero (sinusoidalnie), czwarta "Ty" przyklejona do prawdziwego kursora.
 - Dół: `Scroll →` w Plex Mono z pulsującą strzałką.
 
 ### S2 · Formularz szybki (100–160vh)
@@ -214,7 +213,7 @@ Każdy prompt zaczyna się od: **"Przeczytaj DESIGN.md. Pracujemy nad sekcją X.
 > Przeczytaj DESIGN.md §5. Dla każdego wiersza tabeli wygeneruj przez Higgsfield MCP minimum 3 warianty, obejrzyj je, wybierz najlepszy, upscale'uj, poczekaj na zakończenie (`jobs_wait`), pobierz plik i zapisz pod ścieżką docelową. Hero video w 16:9 i 9:16. GLB < 1 MB — jeśli większy, zdecymuj. Na koniec wypisz listę zapisanych plików z rozmiarami i jednozdaniowym uzasadnieniem każdego wyboru. Nie zaczynaj kodować sekcji, dopóki assety nie są na dysku. Jeśli w trakcie kodowania kolejnych sekcji zabraknie jakiegoś wizuału — generujesz go przez Higgsfield w tym samym standardzie, nie wstawiasz zamiennika.
 
 **P1 — Hero**
-> Zbuduj S1 wg DESIGN.md §4. Kinetic H1 z maskami (GSAP SplitText lub własny split), rotujące słowo, stats odliczające, multiplayer cursors (3 drifting + 1 podążający). Tło R3F: załaduj `/models/x.glb`, obrót za kursorem (lerp 0.05), ScrollTrigger scrub 0→100vh → rotacja 90°, scale 0.6. Canvas dynamic/no-ssr, lazy. Mobile: zamiast canvas wideo `/video/hero.mp4` z posterem. Treść H1/sub/CTA w HTML bez JS.
+> Zbuduj S1 wg DESIGN.md §4. Kinetic H1 z maskami (GSAP SplitText lub własny split), rotujące słowo, stats odliczające. Tło R3F: załaduj `/models/x.glb`, obrót za kursorem (lerp 0.05), ScrollTrigger scrub 0→100vh → rotacja 90°, scale 0.6. Canvas dynamic/no-ssr, lazy. Mobile: zamiast canvas wideo `/video/hero.mp4` z posterem. Treść H1/sub/CTA w HTML bez JS.
 
 **P2 — Formularz**
 > Zbuduj S2: 3-krokowy formularz z server action → POST do `process.env.N8N_WEBHOOK`. Walidacja zod. Autosave localStorage. Sticky lewa kolumna. Honeypot. Toast po wysłaniu.

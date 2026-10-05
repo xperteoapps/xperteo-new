@@ -4,7 +4,6 @@ import Link from "next/link";
 import { getImageProps } from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { Cursors } from "./Cursors";
 import { HeroSceneLoader } from "./HeroSceneLoader";
 import { RotatingWord } from "./RotatingWord";
 import { heroScroll } from "./hero-scroll";
@@ -189,8 +188,6 @@ export function Hero() {
         {/* ciemna winieta pod tekstem, żeby H1 trzymał kontrast nad wideo */}
         <div className="hero-shade absolute inset-0" />
       </div>
-
-      <Cursors hostRef={host} />
 
       {/* ── Treść ──────────────────────────────────────────────────────── */}
       <div
