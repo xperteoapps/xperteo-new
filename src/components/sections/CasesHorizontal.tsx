@@ -41,7 +41,7 @@ export function CasesHorizontal() {
     return () => io.disconnect();
   }, [reduced]);
 
-  useGsap(host, ({ gsap, ScrollTrigger }, el) => {
+  useGsap(host, ({ gsap }, el) => {
     if (!isDesktop()) {
       gsap.from(el.querySelectorAll("[data-case]"), {
         y: 24,
@@ -55,6 +55,34 @@ export function CasesHorizontal() {
     }
     const t = track.current!;
     const distance = () => t.scrollWidth - window.innerWidth;
+    const cards = gsap.utils.toArray<HTMLElement>("[data-case]", el);
+    const medias = cards.map((c) => c.querySelector<HTMLElement>("[data-media-inner]"));
+    const counter = el.querySelector<HTMLElement>("[data-counter]");
+    const bar = el.querySelector<HTMLElement>("[data-progress]");
+
+    // Karta blisko środka: scale 1, pełna opacity meta; dalej: 0.92 i przygaszona.
+    // Obraz wewnątrz karty przesuwa się wolniej niż karta (parallax), skala 1.12 daje zapas.
+    const update = () => {
+      const vw = window.innerWidth;
+      const cx = vw / 2;
+      let best = 0;
+      let bestD = Infinity;
+      cards.forEach((c, i) => {
+        const r = c.getBoundingClientRect();
+        const d = (r.left + r.width / 2 - cx) / vw; // -1 … 1
+        const f = 1 - Math.min(Math.abs(d) / 0.75, 1);
+        if (Math.abs(d) < bestD) {
+          bestD = Math.abs(d);
+          best = i;
+        }
+        gsap.set(c, { scale: 0.92 + 0.08 * f });
+        c.style.setProperty("--f", f.toFixed(3));
+        const m = medias[i];
+        if (m) m.style.transform = `translate3d(${(d * -7).toFixed(2)}%, 0, 0) scale(1.12)`;
+      });
+      if (counter) counter.textContent = String(Math.min(best + 1, PROJECTS.length)).padStart(2, "0");
+    };
+
     const tween = gsap.to(t, {
       x: () => -distance(),
       ease: "none",
@@ -66,18 +94,26 @@ export function CasesHorizontal() {
         scrub: 0.8,
         invalidateOnRefresh: true,
         anticipatePin: 1,
+        onUpdate: (st) => {
+          if (bar) bar.style.transform = `scaleX(${st.progress})`;
+          update();
+        },
+        onRefresh: update,
       },
     });
-    // progress bar
-    const bar = el.querySelector<HTMLElement>("[data-progress]");
-    if (bar) {
-      ScrollTrigger.create({
-        trigger: el,
-        start: "top top+=72",
-        end: () => `+=${distance()}`,
-        onUpdate: (st) => (bar.style.transform = `scaleX(${st.progress})`),
-      });
-    }
+
+    // Wejście: karty wjeżdżają z prawej, raz.
+    gsap.from(cards, {
+      x: 160,
+      opacity: 0,
+      duration: 1.1,
+      ease: "expo.out",
+      stagger: 0.07,
+      scrollTrigger: { trigger: el, start: "top 70%", once: true },
+      onUpdate: update,
+    });
+    update();
+
     return () => {
       tween.kill();
     };
@@ -101,6 +137,11 @@ export function CasesHorizontal() {
             Strony, sklepy i systemy, które pracują.
           </h2>
         </div>
+        <div className="flex items-center gap-8">
+          <p className="hidden font-mono text-2xl md:block" aria-hidden="true">
+            <span data-counter>01</span>
+            <span className="text-muted"> / {String(PROJECTS.length).padStart(2, "0")}</span>
+          </p>
         <Link
           prefetch={false}
           href="/realizacje"
@@ -111,6 +152,7 @@ export function CasesHorizontal() {
             →
           </span>
         </Link>
+        </div>
       </div>
 
       <div className="cases-viewport">
@@ -125,6 +167,7 @@ export function CasesHorizontal() {
                 className="case-media group"
                 aria-label={`${p.name} — otwórz stronę klienta`}
               >
+                <div data-media-inner className="case-media-inner">
                 {p.video ? (
                   <video
                     muted
@@ -150,11 +193,12 @@ export function CasesHorizontal() {
                     priority={i === 0}
                   />
                 )}
+                </div>
                 <span className="label-mono absolute left-4 top-4 rounded bg-bg/80 px-2 py-1 text-fg/90">
                   {String(i + 1).padStart(2, "0")} / {String(PROJECTS.length).padStart(2, "0")}
                 </span>
               </a>
-              <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
+              <div className="case-meta mt-5 flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="label-mono text-muted">
                     {p.industry} · {pillarName(p.pillar)}
@@ -169,7 +213,7 @@ export function CasesHorizontal() {
                   {p.result ? <span className="text-signal">{p.result}</span> : <span className="text-fg/80">{p.type}</span>}
                 </p>
               </div>
-              <ul className="mt-4 flex flex-wrap gap-2">
+              <ul className="case-meta mt-4 flex flex-wrap gap-2">
                 {p.tags.map((t) => (
                   <li key={t} className="rounded border border-line px-2 py-1 font-mono text-[11px] uppercase tracking-[0.06em] text-muted">
                     {t}
@@ -178,7 +222,7 @@ export function CasesHorizontal() {
               </ul>
             </article>
           ))}
-          <article className="case-card case-card-last">
+          <article data-case className="case-card case-card-last">
             <Link prefetch={false} href="/realizacje" className="group flex h-full flex-col justify-between">
               <span className="label-mono text-muted">120+ projektów</span>
               <span className="text-4xl font-bold tracking-tight lg:text-6xl">

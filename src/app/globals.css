@@ -512,7 +512,8 @@ html.lenis body {
     top: calc(var(--nav-h) + 1.5rem);
     min-height: calc(100vh - var(--nav-h) - 3rem);
     padding: 2.5rem;
-    margin-bottom: 1.5rem;
+    /* dwell: karta stoi przyklejona przez ~70vh scrolla, zanim następna zacznie ją przykrywać */
+    margin-bottom: 70vh;
     transform-origin: center top;
     display: flex;
     flex-direction: column;
@@ -563,6 +564,25 @@ html.lenis body {
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--bg-2);
+}
+.case-media-inner {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.case-media-inner > *,
+.case-media-inner canvas {
+  position: absolute !important;
+  inset: 0;
+}
+.case-card {
+  --f: 1;
+  transform-origin: center center;
+}
+.case-meta {
+  opacity: calc(0.4 + 0.6 * var(--f));
+  transform: translate3d(0, calc((1 - var(--f)) * 12px), 0);
+  transition: none;
 }
 .case-media canvas {
   display: block;
