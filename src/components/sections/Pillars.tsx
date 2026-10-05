@@ -6,325 +6,325 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLenis } from "@/components/SmoothScroll";
 import { PILLARS, PROJECTS } from "@/content/site";
 import { isDesktop, useGsap } from "@/hooks/useGsap";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const fmt = (n: number, d: number) =>
   n.toLocaleString("pl-PL", { minimumFractionDigits: d, maximumFractionDigits: d });
 
-const N = PILLARS.length;
-
-type Scroller = { toIndex: (i: number) => void };
+type Dir = "down" | "up";
 
 /**
- * S4 · Cztery filary — „wybór postaci”: sekcja przypięta, scroll przesuwa karty
- * na boki (aktywna w centrum, sąsiednie wystają z boków, mniejsze i przygaszone),
- * snap karta po karcie, nawigacja 01–04 + strzałki. Mobile / bez JS: poziomy
- * carousel ze scroll-snap (ta sama treść w HTML).
+ * S4 · Cztery filary — sticky stacking cards (salo.uk) w trybie pełnoekranowym:
+ * gdy sekcja wjeżdża na ekran (desktop), panel przejmuje cały viewport, karty
+ * przewijają się w środku (sticky + scale/dim poprzedniej), X / Esc zamyka,
+ * scroll za ostatnią kartą wychodzi na S5, scroll nad pierwszą wraca na S3.
+ * Bez JS / mobile / reduced-motion: zwykła sekcja w flow (sticky działa w CSS).
  */
 export function Pillars() {
   const host = useRef<HTMLElement>(null);
-  const track = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const closeBtn = useRef<HTMLButtonElement>(null);
   const lenis = useLenis();
+  const reduced = useReducedMotion();
   const [active, setActive] = useState(0);
-  const [stage, setStage] = useState(false);
-  const scroller = useRef<Scroller | null>(null);
+  const [open, setOpen] = useState(false);
+  const entryDir = useRef<Dir>("down");
+  const dismissed = useRef(false);
+  const played = useRef(new Set<number>());
 
-  useGsap(
-    host,
-    ({ gsap, ScrollTrigger }, el) => {
-      const cards = gsap.utils.toArray<HTMLElement>("[data-card]", el);
-
-      /* ── timeline wizuali per karta (odtwarzane przy aktywacji) ── */
-      const visuals = cards.map((card, i) => {
-        const tl = gsap.timeline({ paused: true });
-        if (i === 0) {
-          const paths = card.querySelectorAll<SVGPathElement>("[data-draw]");
-          paths.forEach((p) => {
-            const len = p.getTotalLength();
-            p.style.strokeDasharray = `${len}`;
-            p.style.strokeDashoffset = `${len}`;
-          });
-          tl.to(paths, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut", stagger: 0.12 }, 0).from(
-            card.querySelectorAll("[data-node]"),
-            { scale: 0.7, opacity: 0, transformOrigin: "center", duration: 0.6, ease: "expo.out", stagger: 0.1 },
-            0.25,
-          );
-        }
-        if (i === 1) {
-          tl.from(card.querySelectorAll("[data-bar]"), {
-            scaleY: 0,
-            transformOrigin: "bottom",
-            duration: 1,
-            ease: "expo.out",
-            stagger: 0.06,
-          });
-          card.querySelectorAll<HTMLElement>("[data-count]").forEach((node) => {
-            const target = Number(node.dataset.count);
-            const decimals = Number(node.dataset.decimals ?? 0);
-            const suffix = node.dataset.suffix ?? "";
-            const o = { n: 0 };
-            tl.to(
-              o,
-              { n: target, duration: 1.4, ease: "power3.out", onUpdate: () => (node.textContent = fmt(o.n, decimals) + suffix) },
-              0,
-            );
-          });
-        }
-        if (i === 2) {
-          const mocks = card.querySelectorAll<HTMLElement>("[data-mock]");
-          tl.from(mocks, { y: 60, opacity: 0, rotate: -2, duration: 1, ease: "expo.out", stagger: 0.12 });
-          mocks.forEach((m, k) =>
-            gsap.to(m, { y: k % 2 ? -10 : 10, duration: 3 + k * 0.6, ease: "sine.inOut", yoyo: true, repeat: -1 }),
-          );
-        }
-        if (i === 3) {
-          tl.from(card.querySelector("[data-photo]"), { scale: 1.12, duration: 1.4, ease: "expo.out" }).from(
-            card.querySelector("[data-badge]"),
-            { y: 16, opacity: 0, duration: 0.6, ease: "expo.out" },
-            0.4,
-          );
-        }
-        return tl;
-      });
-      const played = new Set<number>();
-      const play = (i: number) => {
-        if (played.has(i)) return;
-        played.add(i);
-        visuals[i]?.play();
-      };
-
-      /* ── mobile / wąski ekran: carousel, wizuale po wejściu karty ── */
-      if (!isDesktop()) {
-        const io = new IntersectionObserver(
-          (entries) =>
-            entries.forEach((e) => {
-              if (e.isIntersecting) {
-                const i = cards.indexOf(e.target as HTMLElement);
-                play(i);
-                setActive(i);
-              }
-            }),
-          { root: track.current, threshold: 0.6 },
-        );
-        cards.forEach((c) => io.observe(c));
-        return () => io.disconnect();
-      }
-
-      /* ── desktop: stage + pin + snap ── */
-      setStage(true);
-      el.classList.add("is-stage");
-
-      const layout = () => {
-        const w = cards[0].offsetWidth;
-        return { offset: w * 0.82 };
-      };
-      let L = layout();
-
-      const render = (p: number) => {
-        cards.forEach((card, i) => {
-          const d = i - p; // 0 = centrum
-          const a = Math.min(Math.abs(d), 2.2);
-          if (a < 1.3) play(i); // karta w polu widzenia (także z boku) ma odtworzone wizuale
-          gsap.set(card, {
-            x: d * L.offset,
-            scale: 1 - 0.16 * Math.min(a, 1) - 0.04 * Math.max(a - 1, 0),
-            rotationY: -d * 10,
-            opacity: 1 - 0.5 * Math.min(a, 1) - 0.5 * Math.max(a - 1, 0),
-            zIndex: 10 - Math.round(a * 2),
-            transformPerspective: 1600,
-          });
+  /* ── wizuale kart (timeline per karta, odtwarzane raz) ─────────────── */
+  const buildVisuals = useCallback((gsap: typeof import("gsap").gsap, cards: HTMLElement[]) =>
+    cards.map((card, i) => {
+      const tl = gsap.timeline({ paused: true });
+      if (i === 0) {
+        const paths = card.querySelectorAll<SVGPathElement>("[data-draw]");
+        paths.forEach((p) => {
+          const len = p.getTotalLength();
+          p.style.strokeDasharray = `${len}`;
+          p.style.strokeDashoffset = `${len}`;
         });
-      };
+        tl.to(paths, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut", stagger: 0.12 }, 0).from(
+          card.querySelectorAll("[data-node]"),
+          { scale: 0.7, opacity: 0, transformOrigin: "center", duration: 0.6, ease: "expo.out", stagger: 0.1 },
+          0.25,
+        );
+      }
+      if (i === 1) {
+        tl.from(card.querySelectorAll("[data-bar]"), { scaleY: 0, transformOrigin: "bottom", duration: 1, ease: "expo.out", stagger: 0.06 });
+        card.querySelectorAll<HTMLElement>("[data-count]").forEach((node) => {
+          const target = Number(node.dataset.count);
+          const decimals = Number(node.dataset.decimals ?? 0);
+          const suffix = node.dataset.suffix ?? "";
+          const o = { n: 0 };
+          tl.to(o, { n: target, duration: 1.4, ease: "power3.out", onUpdate: () => (node.textContent = fmt(o.n, decimals) + suffix) }, 0);
+        });
+      }
+      if (i === 2) {
+        const mocks = card.querySelectorAll<HTMLElement>("[data-mock]");
+        tl.from(mocks, { y: 60, opacity: 0, rotate: -2, duration: 1, ease: "expo.out", stagger: 0.12 });
+        mocks.forEach((m, k) => gsap.to(m, { y: k % 2 ? -10 : 10, duration: 3 + k * 0.6, ease: "sine.inOut", yoyo: true, repeat: -1 }));
+      }
+      if (i === 3) {
+        tl.from(card.querySelector("[data-photo]"), { scale: 1.12, duration: 1.4, ease: "expo.out" }).from(
+          card.querySelector("[data-badge]"),
+          { y: 16, opacity: 0, duration: 0.6, ease: "expo.out" },
+          0.4,
+        );
+      }
+      return tl;
+    }), []);
 
-      let lastIdx = -1;
-      const st = ScrollTrigger.create({
-        trigger: el,
-        start: "top top+=72",
-        end: () => `+=${(N - 1) * window.innerHeight * 0.85}`,
-        pin: true,
-        scrub: 0.5,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        snap: { snapTo: 1 / (N - 1), duration: { min: 0.3, max: 0.7 }, ease: "power2.inOut", delay: 0.05 },
-        onRefresh: () => {
-          L = layout();
-        },
-        onUpdate: (self) => {
-          const p = self.progress * (N - 1);
-          render(p);
-          const idx = Math.round(p);
-          if (idx !== lastIdx) {
-            lastIdx = idx;
-            setActive(idx);
-            play(idx);
-          }
-        },
+  /* ── trigger otwarcia (desktop) / fade-up (mobile) ──────────────────── */
+  useGsap(host, ({ gsap, ScrollTrigger }, el) => {
+    const cards = gsap.utils.toArray<HTMLElement>("[data-card]", el);
+    if (!isDesktop()) {
+      const visuals = buildVisuals(gsap, cards);
+      cards.forEach((card, i) => {
+        gsap.from(card, { y: 28, opacity: 0, duration: 0.9, ease: "expo.out", scrollTrigger: { trigger: card, start: "top 88%", once: true } });
+        ScrollTrigger.create({ trigger: card, start: "top 70%", once: true, onEnter: () => visuals[i].play() });
       });
-      render(0);
-      play(0);
+      return;
+    }
+    ScrollTrigger.create({
+      trigger: el,
+      start: "top 45%",
+      end: "bottom 55%",
+      onEnter: () => {
+        if (dismissed.current) return;
+        entryDir.current = "down";
+        el.style.minHeight = `${el.offsetHeight}px`; // placeholder: sekcja trzyma wysokość, gdy panel jest fixed
+        setOpen(true);
+      },
+      onEnterBack: () => {
+        if (dismissed.current) return;
+        entryDir.current = "up";
+        el.style.minHeight = `${el.offsetHeight}px`;
+        setOpen(true);
+      },
+      onLeave: () => (dismissed.current = false),
+      onLeaveBack: () => (dismissed.current = false),
+    });
+  });
 
-      scroller.current = {
-        toIndex: (i) => {
-          const y = st.start + ((st.end - st.start) * i) / (N - 1);
-          if (lenis) lenis.scrollTo(y, { duration: 1.1 });
-          else window.scrollTo({ top: y, behavior: "smooth" });
-        },
-      };
-
-      return () => {
-        scroller.current = null;
-        el.classList.remove("is-stage");
-        setStage(false);
-        visuals.forEach((t) => t.kill());
-      };
+  const close = useCallback(
+    (dir: Dir) => {
+      const el = host.current;
+      if (!el) return;
+      dismissed.current = true;
+      setOpen(false);
+      const r = el.getBoundingClientRect();
+      const top = r.top + window.scrollY;
+      const y = dir === "down" ? top + r.height - 72 : Math.max(0, top - window.innerHeight + 72);
+      if (lenis) {
+        lenis.start();
+        lenis.scrollTo(y, { immediate: true, force: true });
+      } else {
+        window.scrollTo({ top: y });
+      }
     },
     [lenis],
   );
 
-  const goTo = useCallback(
-    (i: number) => {
-      const idx = Math.max(0, Math.min(N - 1, i));
-      if (scroller.current) scroller.current.toIndex(idx);
-      else {
-        const card = track.current?.querySelectorAll<HTMLElement>("[data-card]")[idx];
-        card?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      }
-    },
-    [],
-  );
-
-  // Strzałki klawiatury, gdy sekcja jest w widoku (desktop stage)
+  /* ── tryb pełnoekranowy ─────────────────────────────────────────────── */
   useEffect(() => {
-    if (!stage) return;
-    const onKey = (e: KeyboardEvent) => {
-      const r = host.current?.getBoundingClientRect();
-      if (!r || r.top > 10 || r.bottom < window.innerHeight * 0.5) return;
-      if (e.key === "ArrowRight") goTo(active + 1);
-      if (e.key === "ArrowLeft") goTo(active - 1);
+    if (!open) return;
+    const p = panel.current;
+    const el = host.current;
+    if (!p || !el) return;
+    lenis?.stop();
+    document.documentElement.classList.add("overflow-hidden");
+    const last = p.querySelectorAll<HTMLElement>("[data-card]");
+    const lastTop = last.length ? last[last.length - 1].offsetTop - 96 : p.scrollHeight;
+    p.scrollTop = entryDir.current === "down" ? 0 : lastTop;
+    p.focus({ preventScroll: true });
+    played.current.clear(); // wizuale budowane od nowa przy każdym otwarciu — odtwarzamy je ponownie
+
+    let cancelled = false;
+    let revert: (() => void) | undefined;
+    (async () => {
+      const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
+      const ctx = gsap.context(() => {
+        const cards = gsap.utils.toArray<HTMLElement>("[data-card]", el);
+        const visuals = buildVisuals(gsap, cards);
+        cards.forEach((card, i) => {
+          ScrollTrigger.create({
+            scroller: p,
+            trigger: card,
+            start: "top 55%",
+            end: "bottom 55%",
+            onEnter: () => setActive(i),
+            onEnterBack: () => setActive(i),
+          });
+          ScrollTrigger.create({
+            scroller: p,
+            trigger: card,
+            start: "top 70%",
+            once: true,
+            onEnter: () => {
+              if (!played.current.has(i)) {
+                played.current.add(i);
+                visuals[i].play();
+              }
+            },
+          });
+          const next = cards[i + 1];
+          if (next) {
+            gsap.to(card, {
+              scale: 0.95,
+              filter: "brightness(0.5)",
+              ease: "none",
+              scrollTrigger: { scroller: p, trigger: next, start: "top bottom", end: "top top+=96", scrub: true },
+            });
+          }
+        });
+        gsap.from(p, { opacity: 0, scale: 0.985, duration: 0.7, ease: "expo.out" });
+      }, el);
+      ScrollTrigger.refresh();
+      revert = () => ctx.revert();
+    })();
+
+    const onWheel = (e: WheelEvent) => {
+      const atBottom = p.scrollTop + p.clientHeight >= p.scrollHeight - 2;
+      const atTop = p.scrollTop <= 0;
+      if (atBottom && e.deltaY > 0) close("down");
+      else if (atTop && e.deltaY < 0 && entryDir.current === "up") close("up");
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close(entryDir.current);
+    };
+    p.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [stage, active, goTo]);
+    return () => {
+      cancelled = true;
+      revert?.();
+      p.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKey);
+      document.documentElement.classList.remove("overflow-hidden");
+      lenis?.start();
+      requestAnimationFrame(() => {
+        if (host.current) host.current.style.minHeight = "";
+      });
+    };
+  }, [open, lenis, close, buildVisuals]);
 
   const mock = (slug: string) => PROJECTS.find((p) => p.slug === slug)!;
 
   return (
-    <section
-      ref={host}
-      id="s4"
-      data-slug="co-robimy"
-      aria-labelledby="s4-heading"
-      className="select border-b border-line"
-    >
+    <section ref={host} id="s4" data-slug="co-robimy" aria-labelledby="s4-heading" className="pillars border-b border-line">
       <span id="co-robimy" className="block" style={{ scrollMarginTop: "var(--nav-h)" }} />
-      <div className="select-inner">
-        {/* Nagłówek */}
-        <div className="container-site flex flex-wrap items-end justify-between gap-6 pt-14 lg:pt-8">
-          <div>
-            <p className="label-mono text-muted">S4 · Co robimy</p>
-            <h2 id="s4-heading" className="mt-3 text-4xl font-bold tracking-tight lg:text-5xl">
-              Cztery rzeczy. Jedna firma.
-            </h2>
-          </div>
-          <p className="font-mono text-4xl leading-none lg:text-6xl" aria-live="polite">
-            <span className="text-signal">{PILLARS[active].number}</span>
-            <span className="text-fg/30"> / 04</span>
-          </p>
-        </div>
-
-        {/* Scena / carousel */}
-        <div ref={track} className="select-track" aria-label="Filary oferty">
-          {PILLARS.map((p, i) => (
-            <article
-              key={p.id}
-              data-card
-              className="select-card"
-              aria-labelledby={`pillar-${p.id}`}
-              aria-current={stage && i === active ? "true" : undefined}
-              onClick={() => stage && i !== active && goTo(i)}
+      <div
+        ref={panel}
+        className={`pillars-panel ${open ? "is-open" : ""}`}
+        role={open ? "dialog" : undefined}
+        aria-modal={open ? "true" : undefined}
+        aria-label={open ? "Co robimy — pełny ekran" : undefined}
+        tabIndex={open ? -1 : undefined}
+        data-lenis-prevent
+      >
+        {/* Pasek pełnego ekranu: tylko gdy otwarte */}
+        {open && (
+          <div className="pillars-bar">
+            <span className="label-mono text-muted">S4 · Co robimy · {PILLARS[active].number} / 04</span>
+            <button
+              ref={closeBtn}
+              type="button"
+              onClick={() => close(entryDir.current)}
+              aria-label="Zamknij pełny ekran"
+              className="pillars-close"
             >
-              <div className="flex h-full flex-col gap-6 lg:grid lg:grid-cols-12 lg:gap-8">
-                <div className="flex min-h-0 flex-col lg:col-span-6">
-                  <span className="label-mono text-muted">{p.number}</span>
-                  <h3 id={`pillar-${p.id}`} className="mt-3 text-2xl font-bold tracking-tight lg:text-[2.1rem] lg:leading-[1.05]">
-                    {p.name}
-                  </h3>
-                  <p className="mt-3 text-base text-fg/75">{p.forWhom}</p>
-                  <ul className="mt-5 flex flex-col border-t border-line">
-                    {p.services.map((s) => (
-                      <li key={s.href} className="border-b border-line">
-                        <Link
-                          prefetch={false}
-                          href={s.href}
-                          className="group flex items-center justify-between py-2.5 text-base transition-colors hover:text-signal"
-                        >
-                          {s.label}
-                          <span aria-hidden="true" className="arrow">
-                            →
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    prefetch={false}
-                    href={p.href}
-                    className="group mt-5 inline-flex w-max items-center gap-3 font-mono text-sm uppercase tracking-[0.08em]"
-                  >
-                    Zobacz ofertę
-                    <span aria-hidden="true" className="arrow">
-                      →
-                    </span>
-                  </Link>
-                </div>
-                <div className="min-h-0 lg:col-span-6">
-                  {i === 0 && <AiDiagram />}
-                  {i === 1 && <AdsPanel />}
-                  {i === 2 && <FloatingMockups items={[mock("enedeal"), mock("energynat"), mock("clearviewcar")]} />}
-                  {i === 3 && <TrainingVisual />}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+              <span aria-hidden="true" />
+              <span aria-hidden="true" />
+            </button>
+          </div>
+        )}
 
-        {/* Nawigacja */}
-        <div className="container-site flex items-center justify-between gap-4 pb-8 pt-6 lg:pb-6">
-          <ol className="flex flex-wrap gap-x-6 gap-y-2">
+        <div className="container-site grid-12 gap-y-10 py-20 lg:py-28">
+          {/* Lewa kolumna — sticky */}
+          <div className="col-span-12 lg:col-span-4">
+            <div className="lg:sticky" style={{ top: open ? "6rem" : "calc(var(--nav-h) + 2rem)" }}>
+              <p className="label-mono text-muted">S4 · Co robimy</p>
+              <h2 id="s4-heading" className="mt-6 text-4xl font-bold tracking-tight lg:text-6xl">
+                Cztery rzeczy.
+                <br />
+                Jedna firma.
+              </h2>
+              <p className="mt-6 max-w-[26rem] text-base leading-relaxed text-fg/75">
+                Automatyzacje, marketing, software i szkolenia. Zamiast czterech dostawców, jeden kontakt i jedna
+                odpowiedzialność za wynik.
+              </p>
+              <p className="mt-10 font-mono text-5xl leading-none lg:text-7xl" aria-live="polite">
+                <span className="text-signal">{PILLARS[active].number}</span>
+                <span className="text-fg/30"> / 04</span>
+              </p>
+              {open && !reduced && (
+                <p className="label-mono mt-10 hidden text-muted lg:block">Scroll ↓ · Esc zamyka</p>
+              )}
+            </div>
+          </div>
+
+          {/* Prawa kolumna — karty */}
+          <div className="col-span-12 flex flex-col gap-6 lg:col-span-8 lg:gap-0">
             {PILLARS.map((p, i) => (
-              <li key={p.id}>
+              <article key={p.id} data-card className="pillar-card" style={{ zIndex: i + 1 }} aria-labelledby={`pillar-${p.id}`}>
+                <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:gap-8">
+                  <div className="flex flex-col lg:col-span-6">
+                    <span className="label-mono text-muted">{p.number}</span>
+                    <h3 id={`pillar-${p.id}`} className="mt-4 text-3xl font-bold tracking-tight lg:text-4xl">
+                      {p.name}
+                    </h3>
+                    <p className="mt-4 text-base text-fg/75">{p.forWhom}</p>
+                    <ul className="mt-6 flex flex-col border-t border-line">
+                      {p.services.map((s) => (
+                        <li key={s.href} className="border-b border-line">
+                          <Link
+                            prefetch={false}
+                            href={s.href}
+                            className="group flex items-center justify-between py-3 text-base transition-colors hover:text-signal"
+                          >
+                            {s.label}
+                            <span aria-hidden="true" className="arrow">
+                              →
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      prefetch={false}
+                      href={p.href}
+                      className="group mt-6 inline-flex w-max items-center gap-3 font-mono text-sm uppercase tracking-[0.08em]"
+                    >
+                      Zobacz ofertę
+                      <span aria-hidden="true" className="arrow">
+                        →
+                      </span>
+                    </Link>
+                  </div>
+                  <div className="lg:col-span-6">
+                    {i === 0 && <AiDiagram />}
+                    {i === 1 && <AdsPanel />}
+                    {i === 2 && <FloatingMockups items={[mock("enedeal"), mock("energynat"), mock("clearviewcar")]} />}
+                    {i === 3 && <TrainingVisual />}
+                  </div>
+                </div>
+              </article>
+            ))}
+            {open && (
+              <div className="flex justify-end pt-10">
                 <button
                   type="button"
-                  onClick={() => goTo(i)}
-                  aria-current={i === active ? "true" : undefined}
-                  className={`group flex items-center gap-2 font-mono text-xs uppercase tracking-[0.08em] transition-colors ${
-                    i === active ? "text-signal" : "text-muted hover:text-fg"
-                  }`}
+                  onClick={() => close("down")}
+                  className="group inline-flex h-12 items-center gap-3 rounded bg-fg px-6 text-base font-bold text-bg transition-colors hover:bg-signal hover:text-signal-ink"
                 >
-                  <span>{p.number}</span>
-                  <span className="hidden md:inline">{p.short}</span>
+                  Dalej: realizacje
+                  <span aria-hidden="true" className="arrow">
+                    ↓
+                  </span>
                 </button>
-              </li>
-            ))}
-          </ol>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => goTo(active - 1)}
-              disabled={active === 0}
-              aria-label="Poprzedni filar"
-              className="flex h-11 w-11 items-center justify-center rounded border border-line transition-colors hover:border-fg disabled:opacity-30"
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(active + 1)}
-              disabled={active === N - 1}
-              aria-label="Następny filar"
-              className="flex h-11 w-11 items-center justify-center rounded border border-line transition-colors hover:border-fg disabled:opacity-30"
-            >
-              →
-            </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -349,10 +349,23 @@ function AiDiagram() {
   ];
   return (
     <div className="visual">
-      <Image src="/img/ai-network.webp" alt="" fill sizes="(min-width: 1024px) 30vw, 90vw" className="object-cover opacity-30" />
+      <Image
+        src="/img/ai-network.webp"
+        alt=""
+        fill
+        sizes="(min-width: 1024px) 40vw, 90vw"
+        className="object-cover opacity-30"
+      />
       <svg viewBox="0 0 600 400" className="relative h-full w-full" aria-hidden="true">
         {links.map((d, i) => (
-          <path key={i} d={d} data-draw fill="none" stroke="rgba(244,244,242,0.55)" strokeWidth="1.5" />
+          <path
+            key={i}
+            d={d}
+            data-draw
+            fill="none"
+            stroke="rgba(244,244,242,0.55)"
+            strokeWidth="1.5"
+          />
         ))}
         {nodes.map((n) => (
           <g key={n.id} data-node>
@@ -366,7 +379,14 @@ function AiDiagram() {
               stroke={n.hub ? "#FFD500" : "rgba(244,244,242,0.4)"}
               strokeWidth={n.hub ? 1.5 : 1}
             />
-            <text x={n.x} y={n.y + 5} textAnchor="middle" fontSize="14" fontFamily="var(--font-plex-mono)" fill={n.hub ? "#FFD500" : "#F4F4F2"}>
+            <text
+              x={n.x}
+              y={n.y + 5}
+              textAnchor="middle"
+              fontSize="14"
+              fontFamily="var(--font-plex-mono)"
+              fill={n.hub ? "#FFD500" : "#F4F4F2"}
+            >
               {n.label}
             </text>
           </g>
@@ -400,9 +420,14 @@ function AdsPanel() {
           </p>
         </div>
       </div>
-      <div className="flex h-32 items-end gap-2 lg:h-40" aria-hidden="true">
+      <div className="flex h-40 items-end gap-2 lg:h-48" aria-hidden="true">
         {bars.map((h, i) => (
-          <span key={i} data-bar className={`flex-1 rounded-t ${i === bars.length - 1 ? "bg-fg" : "bg-fg/25"}`} style={{ height: `${h}%` }} />
+          <span
+            key={i}
+            data-bar
+            className={`flex-1 rounded-t ${i === bars.length - 1 ? "bg-fg" : "bg-fg/25"}`}
+            style={{ height: `${h}%` }}
+          />
         ))}
       </div>
       <p className="label-mono text-muted">Google Ads · Meta Ads · ChatGPT Ads · SEO/GEO</p>
@@ -421,7 +446,14 @@ function FloatingMockups({ items }: { items: { slug: string; name: string; image
           data-mock
           className={`absolute ${layout[i]} overflow-hidden rounded border border-line shadow-[0_30px_60px_rgba(0,0,0,0.6)]`}
         >
-          <Image src={it.image} alt={`Mockup: ${it.name}`} width={1600} height={1000} sizes="(min-width: 1024px) 20vw, 60vw" className="h-auto w-full" />
+          <Image
+            src={it.image}
+            alt={`Mockup: ${it.name}`}
+            width={1600}
+            height={1000}
+            sizes="(min-width: 1024px) 25vw, 60vw"
+            className="h-auto w-full"
+          />
         </div>
       ))}
     </div>
@@ -437,7 +469,7 @@ function TrainingVisual() {
           src="/img/training.webp"
           alt="Sala szkoleniowa Akademii Xperteo: uczestnicy przy laptopach"
           fill
-          sizes="(min-width: 1024px) 30vw, 90vw"
+          sizes="(min-width: 1024px) 40vw, 90vw"
           className="object-cover"
         />
       </div>

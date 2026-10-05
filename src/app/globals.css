@@ -497,30 +497,31 @@ html.lenis body {
   -webkit-text-stroke: 0;
 }
 
-/* ── S4 · Wybór postaci (carousel → stage na desktopie z JS) ─────────── */
-.select-inner {
-  display: flex;
-  flex-direction: column;
-}
-.select-track {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  padding: 1.5rem var(--pad) 0.5rem;
-}
-.select-track::-webkit-scrollbar {
-  display: none;
-}
-.select-card {
-  flex: 0 0 86vw;
-  scroll-snap-align: center;
+/* ── S4 · Sticky stacking cards ───────────────────────────────────────── */
+.pillar-card {
+  position: relative;
   background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 1.5rem;
+  will-change: transform, filter;
+}
+@media (min-width: 1024px) {
+  .pillar-card {
+    position: sticky;
+    top: calc(var(--nav-h) + 1.5rem);
+    min-height: calc(100vh - var(--nav-h) - 3rem);
+    padding: 2.5rem;
+    /* dwell: karta stoi przyklejona przez ~70vh scrolla, zanim następna zacznie ją przykrywać */
+    margin-bottom: 70vh;
+    transform-origin: center top;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .pillar-card:last-child {
+    margin-bottom: 0;
+  }
 }
 .visual {
   position: relative;
@@ -531,40 +532,10 @@ html.lenis body {
   background: var(--bg);
 }
 @media (min-width: 1024px) {
-  .select-card {
-    flex-basis: clamp(640px, 58vw, 960px);
-    padding: 2.25rem;
-  }
-  /* Stage: sekcja przypięta na 100vh − nav, karty absolutnie w centrum, transformy z GSAP */
-  .is-stage .select-inner {
-    height: calc(100vh - var(--nav-h));
-  }
-  .is-stage .select-track {
-    position: relative;
-    flex: 1 1 auto;
-    min-height: 0;
-    display: block;
-    overflow: visible;
-    padding: 1.25rem 0 0.5rem;
-    perspective: 1600px;
-  }
-  .is-stage .select-card {
-    position: absolute;
-    top: 1.25rem;
-    bottom: 0.5rem;
-    left: 50%;
-    width: clamp(640px, 58vw, 960px);
-    margin-left: calc(clamp(640px, 58vw, 960px) / -2);
-    will-change: transform, opacity;
-    cursor: default;
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55);
-  }
-  .is-stage .select-card:not([aria-current="true"]) {
-    cursor: pointer;
-  }
-  .is-stage .visual {
-    height: 100%;
-    aspect-ratio: auto;
+  .visual {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 34rem;
   }
 }
 
@@ -786,4 +757,69 @@ html.lenis body {
 }
 .cta-mask > span {
   display: inline-block;
+}
+
+/* ── S4 · Tryb pełnoekranowy (takeover) ───────────────────────────────── */
+.pillars-panel {
+  position: relative;
+}
+@keyframes takeover-in {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.pillars-panel.is-open {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  animation: takeover-in 0.6s var(--ease) both;
+}
+.pillars-panel.is-open .pillar-card {
+  top: 6rem;
+  min-height: calc(100vh - 7.5rem);
+}
+.pillars-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-h);
+  padding-inline: var(--pad);
+  background: linear-gradient(180deg, var(--bg) 60%, transparent);
+}
+.pillars-close {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  transition: border-color 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+.pillars-close:hover {
+  border-color: var(--fg);
+  background: var(--fg);
+}
+.pillars-close span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  margin: -1px 0 0 -10px;
+  background: var(--fg);
+  transition: background-color 0.3s var(--ease);
+}
+.pillars-close:hover span {
+  background: var(--bg);
+}
+.pillars-close span:first-child {
+  transform: rotate(45deg);
+}
+.pillars-close span:last-child {
+  transform: rotate(-45deg);
 }
